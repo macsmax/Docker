@@ -1,0 +1,64 @@
+version: "2"
+
+  owncloud:
+    image: owncloud
+    environment:
+      - VIRTUAL_HOST=mytux.linuxfocus.net
+    restart: always
+    links:
+      - mysql
+    volumes:
+      - /data01/owncloud/data/:/var/www/html/data
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://192.168.155.20:514"
+        tag: "owncloud"
+
+  mysql:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: myocpass
+    volumes:
+      - /data01/ocmysql:/var/lib/mysql
+    restart: always
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://192.168.155.20:514"
+        tag: "mysql"
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /data01/docker/nginx-proxy/certs:/etc/nginx/certs
+      - /data01/docker/nginx-proxy/vhost.d/:/etc/nginx/vhost.d:ro
+    restart: always
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://192.168.155.20:514"
+        tag: "nginx-prx"
+
+  cadvisor:
+    image: google/cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/:/rootfs:ro"
+      - "/var/run:/var/run:rw"
+      - "/sys:/sys:ro"
+      - "/var/lib/docker/:/var/lib/docker:ro"
+    restart: always
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://192.168.155.20:514"
+        tag: "cadvisor"
+
+

@@ -1,0 +1,80 @@
+version: "2"
+
+services:
+  plex:
+    image: linuxserver/plex
+    environment:
+      VERSION: latest
+      PUID: tvs
+      PGID: tvs
+    restart: always
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://192.168.155.20:514"
+        tag: "plex"
+    network_mode: host 
+    volumes:
+      - /etc/tvs/plex:/config
+      - /data02/tvshows:/data/tvshows
+      - /data01/movies:/data/movies
+      - /data01/music:/data/music
+     
+  sickrage:
+    image: linuxserver/sickrage
+    ports:
+      - 8081:8081
+    volumes:
+      - /etc/tvs/sickrage:/config
+      - /data01/torrents_dl:/downloads
+      - /data02/tvshows:/data/tv
+    environment:
+      PUID: tvs
+      PGID: tvs
+    restart: always
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://192.168.155.20:514"
+        tag: "sickrage"
+    links:
+      - plex
+      - transmission
+#
+  transmission:
+    build: transmission
+    privileged: true
+    environment:
+      - ADMIN_PASS=transmission
+    ports:
+      - 12345:12345
+      - 12345:12345/udp
+      - 9091:9091
+    volumes:
+      - /data01/torrents_tmp:/var/lib/transmission/incomplete
+      - /data01/torrents_dl:/var/lib/transmission/downloads
+      - /data01/torrents:/var/lib/transmission/watch
+    restart: always
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://192.168.155.20:514"
+        tag: "transmission"
+
+  cadvisor:
+    image: google/cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/:/rootfs:ro"
+      - "/var/run:/var/run:rw"
+      - "/sys:/sys:ro"
+      - "/var/lib/docker/:/var/lib/docker:ro"
+    restart: always
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://192.168.155.20:514"
+        tag: "cadvisor"
+
+

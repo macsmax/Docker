@@ -3,7 +3,7 @@ version: "2"
   owncloud:
     image: owncloud
     environment:
-      - VIRTUAL_HOST=mytux.linuxfocus.net
+      - VIRTUAL_HOST=myhost.mydomain
     restart: always
     links:
       - mysql
